@@ -1,0 +1,185 @@
+iT邦幫忙AI 企業今年 IT 戰略大公開CYBERSEC 2020 韌性決勝K8s Summit 講者召集計畫啟動！
+iT邦幫忙
+技術問答
+技術文章
+iT 徵才
+Tag
+聊天室
+鐵人賽
+登入/註冊
+2017 iT 邦幫忙鐵人賽
+DAY
+1
+2
+ Big Data Spark 2.0 in Scala系列 第 1 篇
+[Spark-Day1](基礎篇)不囉唆，直接上Spark-shell
+2017鐵人賽 spark scala
+ 
+joechh
+10331 瀏覽
+2016-12-16 23:42:27
+http://ithelp.ithome.com.tw/upload/images/20161216/20103839OAbrDsADNe.png
+先來張Spark 2.0賀圖，這樣也算直上Spark-shell了......XD
+
+開發環境簡述
+Java8
+Hadoop2.7.2(為了HDFS)
+Spark-2.0.0-bin-hadoop2.7
+Kafka 0.8.2.1
+Cassandra 3.9
+SparkCassandra 2.0.0-M3
+後續要用到時會提到Hadoop、Kafka與Cassandra這三個服務的安裝方式
+從開發環境就知道我這30天想寫的東西啦~基本上想寫
+
+RDD API探討與使用方式
+SparkSQL on Spark 2.0，現在已經統整到DataSet了
+Spark Streaming Integration with Kafka
+Spark & Cassandra Integration
+也就是SMACK中的S、C、K。資料從前端接進來後用Spark streaming processing處理，
+然後寫入Cassandra。Cassandra的Data modeling也是有意思的東西。
+
+從0到1，獻給既想學Spark，又想用Scala寫的讀者
+本系列文章不用有Spark與Scala的基礎知識，但必須有開發經驗背景是必須的，用過任何一種OO語言更好>
+我會以Spark的角度切入講API與應用，以講解Scala為輔。希望讓不懂Spark與Scala的讀者，看完系列文之後，知道Spark in Scala的樣貌為何。
+
+先在shell玩玩吧，之後較大的應用還是會以App為主，進shell吧：
+
+$bin/spark-shell 
+[Snippet.1] Shell簡易開檔
+
+scala> val lines = sc.textFile("LICENSE") ①
+lines: org.apache.spark.rdd.RDD[String] = LICENSE MapPartitionsRDD[1] at textFile at <console>:24
+
+scala> val lineCounts = lines.count ②
+lineCounts: Long = 299
+① 初始化一個SparkContext物件sc，這是Spark常見的進入點。shell預設會幫你建立一個sc可以直接使用。透過sc使用textFile函式逐行讀取檔案，並轉成名為lineRDD。
+② 接著使用count讀取集合元素數量
+
+特別注意sc物件在撰寫一般應用程式時，還是要自己宣告~
+
+[Snippet.2]過慮出含有"BSD"字串的行（by匿名函式）
+若只想取得含有某些特定字串的那幾行該怎麼做呢？
+
+scala> val bsdLines = lines.filter(line=>line.contains("BSD")) ①
+bsdLines: org.apache.spark.rdd.RDD[String] = MapPartitionsRDD[2] at filter at <console>:26
+① (line=>line.contains("BSD"))代表導入一個Scala匿名函式，其輸入為line字串，
+輸出為line.contains("BSD")的布林值。若為真則被濾出。結果會寫入另外一個immutable的變數bsdLines中(Scala中val為immutable;var為mutable)。
+
+RDD提供了許多好用的函式，例如常用的map、reduce、filter等，後續core API實戰篇會提到更多。之前(line=>line.contains("BSD"))這種寫法其實是所謂的匿名函式寫法`，寫起來會比較簡潔，但對初學者來說比較不友善，我們可以將它改寫，首先先定義一個函式:
+
+scala> def isBSD(line:String) = { line.contains("BSD")}
+isBSD: (line: String)Boolean
+再重寫先前的範例，明確用isBSD函式：
+
+scala> val bsdLines = lines.filter(isBSD)
+bsdLines: org.apache.spark.rdd.RDD[String] = MapPartitionsRDD[2] at filter at <console>:28
+scala> bsdLines.count
+res1: Long = 33
+如果要把結果印出到console，可以用println函式：
+
+scala> bsdLines.foreach(bLine=>println(bLine))
+BSD-style licenses
+The following components are provided under a BSD-style license. See project link for details.
+     (BSD License) AntLR Parser Generator (antlr:antlr:2.7.7 - http://www.antlr.org/)
+     (BSD License) ANTLR 4.5.2-1 (org.antlr:antlr4:4.5.2-1 - http://wwww.antlr.org/)
+     (BSD licence) ANTLR ST4 4.0.4 (org.antlr:ST4:4.0.4 - http://www.stringtemplate.org)
+     (BSD License) Javolution (javolution:javolution:5.5.1 - http://javolution.org)
+...下略
+這邊使用到RDD的foreach操作，針對RDD的每個元素執行一個函式操作(就是(bLine=>println(bLine))啦)。
+此外函式能更為簡略的方式表達，尤其知道函式引用的參數數量是一個的時候，常見的寫法例如：
+
+bsdLines.foreach(println)
+函式兩邊的bLine被省略了，很精簡吧，但初學者建議先寫長一點比較容易看的懂~
+
+
+留言1 追蹤檢舉
+
+ 
+下一篇
+[Spark-Day2](基礎篇) RDD概念與map操作
+系列文
+Spark 2.0 in Scala 共 30 篇
+目錄RSS系列文 訂閱系列文 42 人訂閱
+26[Spark-Day26](Spark 好友篇) Streaming with Kafka初探
+27[Spark-Day27](Spark 好友篇)SparkStreaming With Kafka
+28[Spark-Day28](Spark好友篇)一次搞定Cassandra安裝與基礎查詢操作
+29[Spark-Day29](Spark好友篇) Cassandra with Spark長篇
+30[Spark-Day30](完結篇)資料工程師之路
+完整目錄
+1 則留言
+0
+
+smallone1
+iT邦新手 5 級 ‧ 2017-05-26 13:39:17
+您好，我是spark新新手
+我在安裝時就卡住了
+想說先安裝在windows上
+但下載下來後解壓縮並沒有如期產生工作資料夾
+請問您也是安裝在windows上嗎?
+謝謝
+
+回應 1檢舉
+
+r00t4dog iT邦新手 5 級 ‧ 2019-10-23 17:17:05
+Spark是用Scala語言寫成的，建議你應該先去安裝Scala，然後才安裝Spark。祝你好運！
+
+登入發表回應
+我要留言
+iT邦幫忙鐵人賽
+熱門問題
+學ｐｈｐ前要先學好哪個？
+有沒有推薦的網路架構參考書籍
+中小企業郵件服務代管選擇
+已解決 GCP 建立虛擬機被收費問題
+為何連續貼上一橫列的html就會發生框線變粗的狀況呢?
+能快速切ip的vpn，並且有大量伺服器的。
+GMAIL設定用公司的信箱寄出，但對方都隔一天才收到
+Array in Array in JavaScript
+IT邦幫忙手機版
+C語言程式 新手求解
+
+中央大學引進 HPE Synergy，翻轉 IT資源配置模式加速孕育創新服務
+數位轉型領先企業戰力大公開
+年度唯一．超規格資安大展，只在 2020 臺灣資安大會！
+Kubernetes Summit 2020講者召集計畫啟動！
+
+站方公告
+☀第 12 屆 iT邦幫忙鐵人賽來了！☀ IT人預備備，9月1日一起挑戰自己，喚醒心中最強大的鐵人！
+熱門tag看更多
+11th鐵人賽 鐵人賽 2019鐵人賽 2018鐵人賽 2017鐵人賽 javascript windows windows server php linux 程式設計 分享 python 資訊安全 c# 職場 專案管理 sql 工作 css
+熱門回答
+有沒有推薦的網路架構參考書籍
+中小企業郵件服務代管選擇
+學ｐｈｐ前要先學好哪個？
+把MSSQL A表欄位複製到B表欄位
+關於郵件重覆收信的問題
+使用PS CS6+Illustrator CS6，筆電跑好慢
+C# WINFROM 從CSV檔讀取資料做分類
+手機熱點不能連線 SSLVPN 的問題?
+Win10語言包異常
+Array in Array in JavaScript
+.
+熱門文章
+【python黑科技-pyautogui】教你用python控制滑鼠與鍵盤
+數學矛盾證法-「盜取策略」我不知道怎麼走但知道遊戲先手必勝的證明技巧
+Week20 - 用FP的Maybe來跟Null爆炸說再見吧！ [高智能方程式系列]
+【pygame初體驗】學習用pygame來打造自己的遊戲
+2020年最佳的網絡數據爬蟲工具(10種評論）
+大數據 - 2020年30種最佳數據可視化工具
+JavaScript ES6 - 創建自己的 Promise & 鏈接技巧
+[JS]使用babel 轉譯 ES7 的 Async function(適用於瀏覽器)--1
+USB隨身碟格式化資料救援方法
+難以理解的python裝飾器語法
+一週點數排行更多點數排行
+海綿寶寶 (antijava)
+浩瀚星空 (yoching)
+阿展展展 (eric211924)
+japhenchen (japhenchen)
+rogeryao (rogeryao)
+微甜的酸 (yappy2000d)
+一級屠豬士 (hitomitanaka)
+listennn08 (listennn08)
+raytracy (raytracy)
+mytiny (mytiny)
+
+電週文化事業版權所有、轉載必究 | Copyright © iThome 刊登廣告 授權服務 服務信箱 隱私權聲明與會員使用條款 iT邦幫忙使用說明
